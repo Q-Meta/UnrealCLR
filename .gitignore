@@ -10,3 +10,5 @@ Source/Managed/Tests/obj
 Source/Native/Binaries
 Source/Native/Intermediate
 Source/Native/Managed
+Source/Managed/Qumeta/**
+.vs

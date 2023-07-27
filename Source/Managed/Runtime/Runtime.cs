@@ -29,6 +29,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
+using System.Runtime.Serialization;
 using UnrealEngine.Plugins;
 
 namespace UnrealEngine.Runtime {
@@ -243,6 +244,7 @@ namespace UnrealEngine.Runtime {
 
 			if (command.type == CommandType.LoadAssemblies) {
 				try {
+					
 					const string frameworkAssemblyName = "UnrealEngine.Framework";
 					string assemblyPath = Assembly.GetExecutingAssembly().Location;
 					string managedFolder = assemblyPath.Substring(0, assemblyPath.IndexOf("Plugins", StringComparison.Ordinal)) + "Managed";
@@ -281,14 +283,18 @@ namespace UnrealEngine.Runtime {
 										using (assembliesContextManager.assembliesContext.EnterContextualReflection()) {
 											Type sharedClass = framework.GetType(frameworkAssemblyName + ".Shared");
 
-											if ((int)sharedClass.GetField("checksum", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null) == sharedChecksum) {
-												plugin.userFunctions = (Dictionary<int, IntPtr>)sharedClass.GetMethod("Load", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { sharedEvents, sharedFunctions, plugin.assembly });
+											var checksum = (int)sharedClass.GetField("checksum", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+											
+											if (checksum == sharedChecksum) {
+												Log(LogLevel.Display, "A6" + checksum);
+
+                                                plugin.userFunctions = (Dictionary<int, IntPtr>)sharedClass.GetMethod("Load", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { sharedEvents, sharedFunctions, plugin.assembly });
 
 												Log(LogLevel.Display, "Framework loaded succesfuly for " + assembly);
 
 												return default;
 											} else {
-												Log(LogLevel.Fatal, "Framework loading failed, version is incompatible with the runtime, please, recompile the project with an updated version referenced in " + assembly);
+												Log(LogLevel.Fatal, "Framework loading failed, version is incompatible with the runtime, please, recompile the project with an updated version referenced in " + assembly + " checksum:" + checksum + " sharedChecksum:" + sharedChecksum);
 
 												loadingFailed = true;
 											}
