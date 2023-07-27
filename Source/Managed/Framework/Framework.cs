@@ -11260,286 +11260,252 @@ namespace UnrealEngine.Framework {
 		public float FindRollClosestToWorldLocation(in Vector3 location, SplineCoordinateSpace coordinateSpace) => findRollClosestToWorldLocation(Pointer, location, coordinateSpace);
 
 		/// <summary>
-		/// Returns the spline's scale closest to the location in world space
+		/// Returns the user arguments
 		/// </summary>
-		public Vector3 FindScaleClosestToWorldLocation(in Vector3 location) {
-			Vector3 value = default;
+		public static string Get() {
+			byte[] stringBuffer = ArrayPool.GetStringBuffer();
 
-			findScaleClosestToWorldLocation(Pointer, location, ref value);
+			get(stringBuffer);
 
-			return value;
+			return stringBuffer.BytesToString();
 		}
 
 		/// <summary>
-		/// Returns a tangent of the spline closest to the location in world space
+		/// Overrides the arguments
 		/// </summary>
-		public Vector3 FindTangentClosestToWorldLocation(in Vector3 location, SplineCoordinateSpace coordinateSpace) {
-			Vector3 value = default;
+		public static void Set(string arguments) {
+			if (arguments == null)
+				throw new ArgumentNullException(nameof(arguments));
 
-			findTangentClosestToWorldLocation(Pointer, location, coordinateSpace, ref value);
-
-			return value;
+			set(arguments.StringToBytes());
 		}
 
 		/// <summary>
-		/// Returns a transform closest to the location in world space
+		/// Appends the string to the arguments as it is without adding a space
 		/// </summary>
-		public Transform FindTransformClosestToWorldLocation(in Vector3 location, SplineCoordinateSpace coordinateSpace, bool useScale = false) {
-			Transform value = default;
+		public static void Append(string arguments) {
+			if (arguments == null)
+				throw new ArgumentNullException(nameof(arguments));
 
-			findTransformClosestToWorldLocation(Pointer, location, coordinateSpace, useScale, ref value);
-
-			return value;
+			append(arguments.StringToBytes());
 		}
-
-		/// <summary>
-		/// Removes a point at the specified index from the spline
-		/// </summary>
-		public void RemoveSplinePoint(int pointIndex, bool updateSpline = true) => removeSplinePoint(Pointer, pointIndex, updateSpline);
-
-		/// <summary>
-		/// Updates the spline
-		/// </summary>
-		public void UpdateSpline() => updateSpline(Pointer);
 	}
 
 	/// <summary>
-	/// A component that emits a radial force or impulse that can affect physics objects and destructible objects
+	/// Functionality for debugging
 	/// </summary>
-	public unsafe partial class RadialForceComponent : SceneComponent {
-		internal override ComponentType Type => ComponentType.RadialForce;
-
-		private protected RadialForceComponent() { }
-
-		internal RadialForceComponent(IntPtr pointer) => Pointer = pointer;
+	public static unsafe partial class Debug {
+		[ThreadStatic]
+		private static StringBuilder stringBuffer = new(8192);
 
 		/// <summary>
-		/// Creates the component attached to an actor and optionally sets it as the root, first component will be set as the root automatically
+		/// Logs a message in accordance to the specified level, omitted in builds with the <a href="https://docs.unrealengine.com/en-US/Programming/Development/BuildConfigurations/index.html#buildconfigurationdescriptions">Shipping</a> configuration
 		/// </summary>
-		/// <param name="actor">The actor to attach the component to</param>
-		/// <param name="name">The name of the component</param>
-		/// <param name="setAsRoot">If <c>true</c>, sets the component as the root</param>
-		/// <param name="blueprint">The blueprint class to use as a base class, should be equal to the exact type of the component</param>
-		public RadialForceComponent(Actor actor, string name = null, bool setAsRoot = false, Blueprint blueprint = null) {
-			if (name?.Length == 0)
-				name = null;
+		public static void Log(LogLevel level, string message) {
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
 
-			if (actor == null)
-				throw new ArgumentNullException(nameof(actor));
-
-			if (blueprint != null && !blueprint.IsValidClass(Type))
-				throw new InvalidOperationException();
-
-			Pointer = create(actor.Pointer, Type, name.StringToBytes(), setAsRoot, blueprint != null ? blueprint.Pointer : IntPtr.Zero);
+			log(level, message.StringToBytes());
 		}
 
 		/// <summary>
-		/// Gets or sets whether to apply the force or impulse to any physics objects that are part of the actor which owns the component
+		/// Creates a log file with the name of assembly if required and writes an exception to it, prints it on the screen, printing on the screen is omitted in builds with the <a href="https://docs.unrealengine.com/en-US/Programming/Development/BuildConfigurations/index.html#buildconfigurationdescriptions">Shipping</a> configuration, but log file will persist
 		/// </summary>
-		public bool IgnoreOwningActor {
-			get => getIgnoreOwningActor(Pointer);
-			set => setIgnoreOwningActor(Pointer, value);
+		public static void Exception(Exception exception) {
+			if (exception == null)
+				throw new ArgumentNullException(nameof(exception));
+
+			stringBuffer.Clear()
+			.AppendFormat("Time: {0}", DateTime.Now.ToString("dd/MM/yyyy hh:mm:ss tt"))
+			.AppendLine().AppendFormat("Message: {0}", exception.Message)
+			.AppendLine().AppendFormat("StackTrace: {0}", exception.StackTrace)
+			.AppendLine().AppendFormat("Source: {0}", exception.Source)
+			.AppendLine();
+
+			Debug.exception(stringBuffer.ToString().StringToBytes());
+
+			using (StreamWriter streamWriter = File.AppendText(Application.ProjectDirectory + "Saved/Logs/Exceptions-" + Assembly.GetCallingAssembly().GetName().Name + ".log")) {
+				streamWriter.WriteLine(stringBuffer);
+				streamWriter.Close();
+			}
 		}
 
 		/// <summary>
-		/// Gets or sets whether the impulse will ignore the mass of objects and will always result in a fixed velocity change
+		/// Prints a debug message on the screen assigned to the key identifier, omitted in builds with the <a href="https://docs.unrealengine.com/en-US/Programming/Development/BuildConfigurations/index.html#buildconfigurationdescriptions">Shipping</a> configuration
 		/// </summary>
-		public bool ImpulseVelocityChange {
-			get => getImpulseVelocityChange(Pointer);
-			set => setImpulseVelocityChange(Pointer, value);
+		public static void AddOnScreenMessage(int key, float timeToDisplay, Color displayColor, string message) {
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			addOnScreenMessage(key, timeToDisplay, displayColor.ToArgb(), message.StringToBytes());
 		}
 
 		/// <summary>
-		/// Gets or sets whether the force or impulse should lose its strength linearly
+		/// Clears any existing debug messages, omitted in builds with the <a href="https://docs.unrealengine.com/en-US/Programming/Development/BuildConfigurations/index.html#buildconfigurationdescriptions">Shipping</a> configuration
 		/// </summary>
-		public bool LinearFalloff {
-			get => getLinearFalloff(Pointer);
-			set => setLinearFalloff(Pointer, value);
-		}
-
-		/// <summary>
-		/// Gets or sets the force strength
-		/// </summary>
-		public float ForceStrength {
-			get => getForceStrength(Pointer);
-			set => setForceStrength(Pointer, value);
-		}
-
-		/// <summary>
-		/// Gets or sets the impulse strength
-		/// </summary>
-		public float ImpulseStrength {
-			get => getImpulseStrength(Pointer);
-			set => setImpulseStrength(Pointer, value);
-		}
-
-		/// <summary>
-		/// Gets or sets the radius within the force or impulse will be applied
-		/// </summary>
-		public float Radius {
-			get => getRadius(Pointer);
-			set => setRadius(Pointer, value);
-		}
-
-		/// <summary>
-		/// Adds a collision channel that will be affected by the radial force
-		/// </summary>
-		public void AddCollisionChannelToAffect(CollisionChannel channel) => addCollisionChannelToAffect(Pointer, channel);
-
-		/// <summary>
-		/// Fires a single impulse
-		/// </summary>
-		public void FireImpulse() => fireImpulse(Pointer);
+		public static void ClearOnScreenMessages() => clearOnScreenMessages();
 	}
 
 	/// <summary>
-	/// The base class of materials that can be applied to meshes
+	/// Provides information about the application
 	/// </summary>
-	public abstract unsafe partial class MaterialInterface : IEquatable<MaterialInterface> {
-		private IntPtr pointer;
+	public static unsafe partial class Application {
+		/// <summary>
+		/// Returns <c>true</c> if the application can render anything
+		/// </summary>
+		public static bool IsCanEverRender => isCanEverRender();
 
-		internal IntPtr Pointer {
+		/// <summary>
+		/// Returns <c>true</c> if current build is meant for release to retail
+		/// </summary>
+		public static bool IsPackagedForDistribution => isPackagedForDistribution();
+
+		/// <summary>
+		/// Returns <c>true</c> if current build is packaged for shipping
+		/// </summary>
+		public static bool IsPackagedForShipping => isPackagedForShipping();
+
+		/// <summary>
+		/// Returns the project directory
+		/// </summary>
+		public static string ProjectDirectory {
 			get {
-				if (!IsCreated)
-					throw new InvalidOperationException();
+				byte[] stringBuffer = ArrayPool.GetStringBuffer();
 
-				return pointer;
+				getProjectDirectory(stringBuffer);
+
+				return stringBuffer.BytesToString();
+			}
+		}
+
+		/// <summary>
+		/// Returns the default language used by current platform
+		/// </summary>
+		public static string DefaultLanguage {
+			get {
+				byte[] stringBuffer = ArrayPool.GetStringBuffer();
+
+				getDefaultLanguage(stringBuffer);
+
+				return stringBuffer.BytesToString();
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the name of the current project
+		/// </summary>
+		public static string ProjectName {
+			get {
+				byte[] stringBuffer = ArrayPool.GetStringBuffer();
+
+				getProjectName(stringBuffer);
+
+				return stringBuffer.BytesToString();
 			}
 
 			set {
-				if (value == IntPtr.Zero)
-					throw new InvalidOperationException();
-
-				pointer = value;
+				setProjectName(value.StringToBytes());
 			}
 		}
 
-		private protected MaterialInterface() { }
+		/// <summary>
+		/// Gets or sets the current volume multiplier
+		/// </summary>
+		public static float VolumeMultiplier {
+			get => getVolumeMultiplier();
+			set => setVolumeMultiplier(value);
+		}
 
 		/// <summary>
-		/// Returns <c>true</c> if the object is created
+		/// Requests application exit
 		/// </summary>
-		public bool IsCreated => pointer != IntPtr.Zero && Object.isValid(pointer);
-
-		/// <summary>
-		/// Indicates equality of objects
-		/// </summary>
-		public bool Equals(MaterialInterface other) => IsCreated && pointer == other?.pointer;
-
-		/// <summary>
-		/// Returns a hash code for the object
-		/// </summary>
-		public override int GetHashCode() => pointer.GetHashCode();
-
-		/// <summary>
-		/// Returns <c>true</c> if the material is two sided
-		/// </summary>
-		public bool IsTwoSided => isTwoSided(Pointer);
+		public static void RequestExit(bool force = false) => requestExit(force);
 	}
 
-	/// <summary>
-	/// An asset which can be applied to a mesh to control the visual look
-	/// </summary>
-	public unsafe partial class Material : MaterialInterface {
-		private protected Material() { }
+    /// <summary>
+    /// A representation of the engine's object reference
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct ObjectReference : IEquatable<ObjectReference>
+    {
+        private IntPtr pointer;
 
-		internal Material(IntPtr pointer) => Pointer = pointer;
+        internal IntPtr Pointer
+        {
+            get
+            {
+                if (!IsCreated)
+                    throw new InvalidOperationException();
 
-		/// <summary>
-		/// Finds and loads a material by name
-		/// </summary>
-		/// <returns>A material or <c>null</c> on failure</returns>
-		public static Material Load(string name) {
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+                return pointer;
+            }
 
-			IntPtr pointer = Object.load(ObjectType.Material, name.StringToBytes());
+            set
+            {
+                if (value == IntPtr.Zero)
+                    throw new InvalidOperationException();
 
-			if (pointer != IntPtr.Zero)
-				return new(pointer);
+                pointer = value;
+            }
+        }
 
-			return null;
-		}
+        /// <summary>
+        /// Tests for equality between two objects
+        /// </summary>
+        public static bool operator ==(ObjectReference left, ObjectReference right) => left.Equals(right);
 
-		/// <summary>
-		/// Returns <c>true</c> if the material is one of the default materials
-		/// </summary>
-		public bool IsDefaultMaterial => isDefaultMaterial(Pointer);
-	}
+        /// <summary>
+        /// Tests for inequality between two objects
+        /// </summary>
+        public static bool operator !=(ObjectReference left, ObjectReference right) => !left.Equals(right);
 
-	/// <summary>
-	/// An abstract instance of the material
-	/// </summary>
-	public abstract unsafe partial class MaterialInstance : MaterialInterface {
-		private protected MaterialInstance() { }
+        /// <summary>
+        /// Returns <c>true</c> if the object is created
+        /// </summary>
+        public bool IsCreated => pointer != IntPtr.Zero && Object.isValid(pointer);
 
-		/// <summary>
-		/// Returns <c>true</c> if the material instance is a child of another Material
-		/// </summary>
-		public bool IsChildOf(MaterialInterface material) {
-			if (material == null)
-				throw new ArgumentNullException(nameof(material));
+        /// <summary>
+        /// Returns the unique ID of the object, reused by the engine, only unique while the object is alive
+        /// </summary>
+        public uint ID => Object.getID(Pointer);
 
-			return isChildOf(Pointer, material.Pointer);
-		}
+        /// <summary>
+        /// Returns the name of the object
+        /// </summary>
+        public string Name
+        {
+            get
+            {
+                byte[] stringBuffer = ArrayPool.GetStringBuffer();
 
-		/// <summary>
-		/// Returns the parent material or <c>null</c> on failure
-		/// </summary>
-		public MaterialInstanceDynamic GetParent() {
-			IntPtr pointer = getParent(Pointer);
+                Object.getName(Pointer, stringBuffer);
 
-			if (pointer != IntPtr.Zero)
-				return new(pointer);
+                return stringBuffer.BytesToString();
+            }
+        }
 
-			return null;
-		}
-	}
+        /// <summary>
+        /// Indicates equality of objects
+        /// </summary>
+        public bool Equals(ObjectReference other) => IsCreated && pointer == other.pointer;
 
-	/// <summary>
-	/// A dynamic instance of the material
-	/// </summary>
-	public unsafe partial class MaterialInstanceDynamic : MaterialInstance {
-		private protected MaterialInstanceDynamic() { }
+        /// <summary>
+        /// Indicates equality of objects
+        /// </summary>
+        public override bool Equals(object value)
+        {
+            if (value == null)
+                return false;
 
-		internal MaterialInstanceDynamic(IntPtr pointer) => Pointer = pointer;
+            if (!ReferenceEquals(value.GetType(), typeof(ObjectReference)))
+                return false;
 
-		/// <summary>
-		/// Removes all parameter values
-		/// </summary>
-		public void ClearParameterValues() => clearParameterValues(Pointer);
+            return Equals((ObjectReference)value);
+        }
 
-		/// <summary>
-		/// Sets the texture parameter value
-		/// </summary>
-		public void SetTextureParameterValue(string parameterName, Texture value) {
-			if (parameterName == null)
-				throw new ArgumentNullException(nameof(parameterName));
-
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
-
-			setTextureParameterValue(Pointer, parameterName.StringToBytes(), value.Pointer);
-		}
-
-		/// <summary>
-		/// Sets the vector parameter value
-		/// </summary>
-		public void SetVectorParameterValue(string parameterName, in LinearColor value) {
-			if (parameterName == null)
-				throw new ArgumentNullException(nameof(parameterName));
-
-			setVectorParameterValue(Pointer, parameterName.StringToBytes(), value);
-		}
-
-		/// <summary>
-		/// Sets the scalar parameter value
-		/// </summary>
-		public void SetScalarParameterValue(string parameterName, float value) {
-			if (parameterName == null)
-				throw new ArgumentNullException(nameof(parameterName));
-
-			setScalarParameterValue(Pointer, parameterName.StringToBytes(), value);
-		}
-	}
+        /// <summary>
+        /// Returns a hash code for the object
+        /// </summary>
+        public override int GetHashCode() => pointer.GetHashCode();
+    }
 }
