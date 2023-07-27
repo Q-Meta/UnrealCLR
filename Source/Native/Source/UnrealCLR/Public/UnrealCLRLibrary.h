@@ -49,15 +49,3 @@ class UNREALCLR_API UUnrealCLRLibrary : public UBlueprintFunctionLibrary {
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = ".NET", meta = (ToolTip = "Finds the managed function from loaded assembly, optional parameter suppresses errors if the function was not found"))
 	static FManagedFunction FindManagedFunction(FString Method, bool Optional, bool& Result);
 };
-
-UCLASS()
-class UNREALCLR_API UUnrealCLRCharacter : public UObject {
-	GENERATED_UCLASS_BODY()
-
-	public:
-
-	void* LandedCallback;
-
-	UFUNCTION()
-	void Landed(const FHitResult& Hit);
-};
