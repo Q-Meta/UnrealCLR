@@ -292,9 +292,4 @@ namespace UnrealCLR {
 		static void* Events[128];
 		static void* Functions[128];
 	}
-
-	namespace Utility {
-		FORCEINLINE static size_t Strcpy(char* Destination, const char* Source, size_t Length);
-		FORCEINLINE static size_t Strlen(const char* Source);
-	}
 }

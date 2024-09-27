@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
@@ -34,7 +34,7 @@
   </PropertyGroup>
 
   <ItemGroup Condition="$(DefineConstants.Contains('API_REFERENCE'))">
-    <PackageReference Include="DefaultDocumentation" Version="0.6.15" PrivateAssets="all" />
+    <PackageReference Include="DefaultDocumentation" Version="0.8.2" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

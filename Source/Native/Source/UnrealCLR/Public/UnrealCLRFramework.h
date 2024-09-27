@@ -25,6 +25,13 @@
 
 UNREALCLR_API DECLARE_LOG_CATEGORY_EXTERN(LogUnrealManaged, Log, All);
 
+namespace UnrealCLR {
+	namespace Utility {
+		FORCEINLINE size_t Strcpy(char* Destination, const char* Source, size_t Length);
+		FORCEINLINE size_t Strlen(const char* Source);
+	}
+}
+
 namespace UnrealCLRFramework {
 	enum struct LogLevel : int32 {
 		Display,
@@ -54,33 +61,33 @@ namespace UnrealCLRFramework {
 	// Non-instantiable
 
 	namespace Assert {
-		static void OutputMessage(const char* Message);
+		void OutputMessage(const char* Message);
 	}
 
 	namespace CommandLine {
-		static void Get(char* Arguments);
-		static void Set(const char* Arguments);
-		static void Append(const char* Arguments);
+		void Get(char* Arguments);
+		void Set(const char* Arguments);
+		void Append(const char* Arguments);
 	}
 
 	namespace Debug {
-		static void Log(LogLevel Level, const char* Message);
-		static void Exception(const char* Exception);
-		static void AddOnScreenMessage(int32 Key, float TimeToDisplay, Color DisplayColor, const char* Message);
-		static void ClearOnScreenMessages();
+		void Log(LogLevel Level, const char* Message);
+		void Exception(const char* Exception);
+		void AddOnScreenMessage(int32 Key, float TimeToDisplay, Color DisplayColor, const char* Message);
+		void ClearOnScreenMessages();
 	}
 
 	namespace Application {
-		static bool IsCanEverRender();
-		static bool IsPackagedForDistribution();
-		static bool IsPackagedForShipping();
-		static void GetProjectDirectory(char* Directory);
-		static void GetDefaultLanguage(char* Language);
-		static void GetProjectName(char* ProjectName);
-		static float GetVolumeMultiplier();
-		static void SetProjectName(const char* ProjectName);
-		static void SetVolumeMultiplier(float Value);
-		static void RequestExit(bool Force);
+		bool IsCanEverRender();
+		bool IsPackagedForDistribution();
+		bool IsPackagedForShipping();
+		void GetProjectDirectory(char* Directory);
+		void GetDefaultLanguage(char* Language);
+		void GetProjectName(char* ProjectName);
+		float GetVolumeMultiplier();
+		void SetProjectName(const char* ProjectName);
+		void SetVolumeMultiplier(float Value);
+		void RequestExit(bool Force);
 	}
 
 }

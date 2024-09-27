@@ -399,34 +399,6 @@ FString UnrealCLR::PostUpdateTickFunction::DiagnosticMessage() {
 	return TEXT("PostUpdateTickFunction");
 }
 
-size_t UnrealCLR::Utility::Strcpy(char* Destination, const char* Source, size_t Length) {
-	char* destination = Destination;
-	const char* source = Source;
-	size_t length = Length;
-
-	if (length != 0 && --length != 0) {
-		do {
-			if ((*destination++ = *source++) == 0)
-				break;
-		}
-
-		while (--length != 0);
-	}
-
-	if (length == 0) {
-		if (Length != 0)
-			*destination = '\0';
-
-		while (*source++);
-	}
-
-	return (source - Source - 1);
-}
-
-size_t UnrealCLR::Utility::Strlen(const char* Source) {
-	return strlen(Source) + 1;
-}
-
 #undef LOCTEXT_NAMESPACE
 
 IMPLEMENT_MODULE(UnrealCLR::Module, UnrealCLR)
